@@ -11,13 +11,11 @@ using namespace std;
 //Vector holding all numbers to be sorted
 vector<int> arr;
 
-//Vectpr holding final sorted array
-vector<int> final_arr;
-
 pthread_mutex_t locker;
 
 int sort_counter = 0;
 int merge_counter = 0;
+
 //Upper
 int u = 0;
 //Count of Numbers
@@ -25,12 +23,8 @@ int n = 0;
 //# of Threads
 int p = 0;
 
-int remaining_segments = 0;
-//# of Rounds
+//Round # for Merging
 int seg = 1;
-
-//Length Counter
-int length = 0;
 
 void* sortArray(void* arg) {
     pthread_mutex_lock(&locker);
@@ -41,30 +35,33 @@ void* sortArray(void* arg) {
         cout << "This is thread: " << part << endl;
 
         int start = part * floor(n / p);
-        cout << "The start is: " << start << endl;
+        cout << "The segment start index is: " << start << endl;
         int end = start + floor(n / p);
-        cout << "The end is: " << end << endl;
+        cout << "The segment end index is: " << end - 1 << endl;
 
         sort(arr.begin() + start, arr.begin() + end);
 
-        cout << "This is the sorted section: " << endl;
+        cout << "This is the sorted segment: " << endl;
         for(int i = start; i < end; i++) {
             cout << arr[i] << " ";
         }
 
-        cout << endl;
+        cout << "\n\n";
     }
     else {
         int start = part * floor(n / p);
+        cout << "The segment start index is: " << start << endl;
+        int end = arr.size();
+        cout << "The segment end index is: " << end - 1 << endl;
         
         sort(arr.begin() + start, arr.end());
 
-        cout << "This is the sorted section: " << endl;
+        cout << "This is the sorted segment: " << endl;
         for(int i = start; i < arr.size(); i++) {
             cout << arr[i] << " ";
         }
 
-        cout << endl;
+        cout << "\n\n";
     }
 
     pthread_mutex_unlock(&locker);
@@ -81,7 +78,16 @@ void* mergeArray(void* args) {
     cout << "The round is: " << seg << endl;
 
     int start1 = part * floor(n / p) * 2 * seg;
-    int end1 = start1 + (floor(n / p) * seg) - 1;
+    int end1 = 0;
+
+    for(int i = start1; i < arr.size() - 1; i++) {
+        if(arr[i] > arr[i + 1]) {
+            end1 = i;
+            break;
+        }
+    }
+
+    //int end1 = start1 + (floor(n / p) * seg) - 1;
     int start2 = end1 + 1;
     int end2 = 0;
 
@@ -90,27 +96,28 @@ void* mergeArray(void* args) {
     else
         end2 = start2 + (floor(n / p) * seg);
 
-    // if(seg < seg / 2) {
-    //     if(n - (start2 + floor(n / p)) < floor(n / p))
-    //         end2 = arr.size() - 1;
-    //     else
-    //         end2 = start2 + floor(n / p);
+    if(!(end1 == arr.size() - 1) && !(end1 == 0)) {
+        cout << "Start 1 is: " << start1 << endl;
+        cout << "End 1 is: " << end1 << endl;
+        cout << "Start 2 is: " << start2 << endl;
+        cout << "End 2 is: " << end2 - 1 << endl;
 
-    cout << "Start 1 is: " << start1 << endl;
-    cout << "End 1 is: " << end1 << endl;
-    cout << "Start 2 is: " << start2 << endl;
-    cout << "End 2 is: " << end2 << endl;
-    //merge(arr.begin() + start1, arr.begin() + end1, arr.begin() + start2, arr.begin() + end2, final_arr.begin());
-
-    inplace_merge(arr.begin() + start1, arr.begin() + start2, arr.begin() + end2);
-    //}
-
-    // seg++;
-    cout << "The sorted array is: " << endl;
-    for(int i = 0; i < n; i++) {
-        cout << arr[i] << endl;
+        inplace_merge(arr.begin() + start1, arr.begin() + start2, arr.begin() + end2);
     }
+    // cout << "Start 1 is: " << start1 << endl;
+    // cout << "End 1 is: " << end1 << endl;
+    // cout << "Start 2 is: " << start2 << endl;
+    // cout << "End 2 is: " << end2 - 1 << endl;
 
+    // inplace_merge(arr.begin() + start1, arr.begin() + start2, arr.begin() + end2);
+
+    cout << "The current merged array is: " << endl;
+    for(int i = 0; i < n; i++) {
+        if(i + 1 == arr.size())
+            cout << arr[i] << "\n\n";
+        else
+            cout << arr[i] << " ";
+    }
 
     pthread_mutex_unlock(&locker);
 
@@ -138,8 +145,14 @@ int main(int argc, char* argv[]) {
         int newNum = rand() % u + 1;
 
         arr.push_back(newNum);
+    }
 
-        cout << newNum << endl;
+    cout << "The populated array is: " << endl;
+    for(int i = 0; i < n; i++) {
+        if(i + 1 == arr.size())
+            cout << arr[i] << "\n\n";
+        else
+            cout << arr[i] << " ";
     }
 
     //Create Sort Threads
@@ -151,52 +164,80 @@ int main(int argc, char* argv[]) {
     for(int i = 0; i < p; i++) {
         pthread_join(sort_threads[i], NULL);
     }
-    
-    // //Create Merge Threads
-    // for(int i = 0; i < p - 1; i++) {
-    //     pthread_create(&merge_threads[i], NULL, mergeArray, NULL);
-    // }
 
-    // //Join Merge Threads
-    // for(int i = 0; i < p - 1; i++) {
-    //     pthread_join(merge_threads[i], NULL);
-    // }
-
-    cout << "The sorted array is: " << endl;
+    cout << "The sorted and segmented array is: " << endl;
     for(int i = 0; i < n; i++) {
-        cout << arr[i] << endl;
+        if(i + 1 == arr.size())
+            cout << arr[i] << "\n\n";
+        else
+            cout << arr[i] << " ";
     }
 
-    length = floor(n / p);
-    bool isEven = false;
-    int segments = p;
+    int segments = p % 2 + p / 2;
 
-    for(int i = segments; i != 0; i /= 2) {
-        cout << "The amount of segments: " << i << endl;
+    for(int i = segments; i != 0; i = i % 2 + i / 2) {
+        //cout << "The amount of segments: " << i << endl;
 
-        remaining_segments = i;
+        if(!(i % 2 == 0)) {
+            for(int a = 0; a < i; a++) {
+                pthread_create(&merge_threads[a], NULL, mergeArray, NULL);
+            }
 
-        for(int a = 0; a < i / 2; a++) {
-            pthread_create(&merge_threads[a], NULL, mergeArray, NULL);
+            for(int a = 0; a < i; a++) {
+                pthread_join(merge_threads[a], NULL);
+            }
+        }
+        else {
+            for(int a = 0; a < i - 1; a++) {
+                pthread_create(&merge_threads[a], NULL, mergeArray, NULL);
+            }
+
+            for(int a = 0; a < i - 1; a++) {
+                pthread_join(merge_threads[a], NULL);
+            }
         }
 
-        for(int a = 0; a < i / 2; a++) {
-            pthread_join(merge_threads[a], NULL);
-        }
+        if(i == 1)
+            i -= 1;
+
+        // for(int a = 0; a < i; a++) {
+        //     pthread_create(&merge_threads[a], NULL, mergeArray, NULL);
+        // }
+
+        // for(int a = 0; a < i; a++) {
+        //     pthread_join(merge_threads[a], NULL);
+        // }
+    
+       
+        // if(i % 2 == 0) {
+        //     for(int a = 0; a < i / 2; a++) {
+        //         pthread_create(&merge_threads[a], NULL, mergeArray, NULL);
+        //     }
+
+        //     for(int a = 0; a < i / 2; a++) {
+        //         pthread_join(merge_threads[a], NULL);
+        //     }
+        // }
+
+        // for(int a = segments; a < seg; a++) {
+        //     pthread_create(&merge_threads[a], NULL, mergeArray, NULL);
+        // }
+
+        // for(int a = 0; a < seg; a++) {
+        //     pthread_join(merge_threads[a], NULL);
+        // }
+    
 
         merge_counter = 0;
         seg++;
     }
 
-
-    cout << "The sorted array is: " << endl;
-    for(int i = 0; i < n; i++) {
-        cout << arr[i] << endl;
-    }
-
     cout << "The merged array is: " << endl;
-    for(int i = 0; i < final_arr.size(); i++) {
-        cout << final_arr[i] << endl;
+  for(int i = 0; i < n; i++) {
+        if(i + 1 == arr.size())
+            cout << arr[i] << "\n\n";
+        else
+            cout << arr[i] << " ";
     }
 
     return 0;
