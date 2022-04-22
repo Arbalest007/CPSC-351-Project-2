@@ -78,16 +78,17 @@ void* mergeArray(void* args) {
     int part = merge_counter++;
     
     cout << "Start of Merge: " << endl;
+    cout << "The round is: " << seg << endl;
 
     int start1 = part * floor(n / p) * 2 * seg;
-    int end1 = start1 + (floor(n / p)) * seg - 1;
+    int end1 = start1 + (floor(n / p) * seg) - 1;
     int start2 = end1 + 1;
     int end2 = 0;
 
-    if(n - (start2 + floor(n / p) * seg) < floor(n / p))
-        end2 = arr.size() - 1;
+    if(n - (start2 + floor(n / p) * seg) < (floor(n / p) * seg))
+        end2 = arr.size();
     else
-        end2 = start2 + (floor(n / p) - 1) * seg;
+        end2 = start2 + (floor(n / p) * seg);
 
     // if(seg < seg / 2) {
     //     if(n - (start2 + floor(n / p)) < floor(n / p))
@@ -105,7 +106,10 @@ void* mergeArray(void* args) {
     //}
 
     // seg++;
-    cout << "This is round: " << seg << endl;
+    cout << "The sorted array is: " << endl;
+    for(int i = 0; i < n; i++) {
+        cout << arr[i] << endl;
+    }
 
 
     pthread_mutex_unlock(&locker);
@@ -157,6 +161,11 @@ int main(int argc, char* argv[]) {
     // for(int i = 0; i < p - 1; i++) {
     //     pthread_join(merge_threads[i], NULL);
     // }
+
+    cout << "The sorted array is: " << endl;
+    for(int i = 0; i < n; i++) {
+        cout << arr[i] << endl;
+    }
 
     length = floor(n / p);
     bool isEven = false;
