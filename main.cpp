@@ -25,6 +25,7 @@ int n = 0;
 //# of Threads
 int p = 0;
 
+int remaining_segments = 0;
 //# of Rounds
 int seg = 1;
 
@@ -78,15 +79,15 @@ void* mergeArray(void* args) {
     
     cout << "Start of Merge: " << endl;
 
-    int start1 = part * floor(n / p) * 2;
-    int end1 = (start1 + floor(n / p) - 1) * seg;
+    int start1 = part * floor(n / p) * 2 * seg;
+    int end1 = start1 + (floor(n / p)) * seg - 1;
     int start2 = end1 + 1;
     int end2 = 0;
 
-    if(n - (start2 + floor(n / p)) < floor(n / p))
+    if(n - (start2 + floor(n / p) * seg) < floor(n / p))
         end2 = arr.size() - 1;
     else
-        end2 = start2 + floor(n / p) - 1;
+        end2 = start2 + (floor(n / p) - 1) * seg;
 
     // if(seg < seg / 2) {
     //     if(n - (start2 + floor(n / p)) < floor(n / p))
@@ -100,7 +101,7 @@ void* mergeArray(void* args) {
     cout << "End 2 is: " << end2 << endl;
     //merge(arr.begin() + start1, arr.begin() + end1, arr.begin() + start2, arr.begin() + end2, final_arr.begin());
 
-    //     //inplace_merge(arr.begin() + start1, arr.begin() + start2, arr.begin() + end2);
+    inplace_merge(arr.begin() + start1, arr.begin() + start2, arr.begin() + end2);
     //}
 
     // seg++;
@@ -163,6 +164,8 @@ int main(int argc, char* argv[]) {
 
     for(int i = segments; i != 0; i /= 2) {
         cout << "The amount of segments: " << i << endl;
+
+        remaining_segments = i;
 
         for(int a = 0; a < i / 2; a++) {
             pthread_create(&merge_threads[a], NULL, mergeArray, NULL);
