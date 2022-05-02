@@ -49,6 +49,8 @@ void* sortArray(void* arg) {
         cout << "\n\n";
     }
     else {
+        cout << "This is thread: " << part << endl;
+
         int start = part * floor(n / p);
         cout << "The segment start index is: " << start << endl;
         int end = arr.size();
@@ -74,9 +76,6 @@ void* mergeArray(void* args) {
 
     int part = merge_counter++;
     
-    cout << "Start of Merge: " << endl;
-    cout << "The round is: " << seg << endl;
-
     int start1 = part * floor(n / p) * 2 * seg;
     int end1 = 0;
 
@@ -102,20 +101,22 @@ void* mergeArray(void* args) {
     //We only merge if we can verify that segment 1 is not at the end of the array and that 
     //segment 2 actually exists - which happens when end1 is not 0 from the earlier for loop at the start of this function
     if(!(end1 == arr.size() - 1) && !(end1 == 0)) {
-        cout << "Start 1 is: " << start1 << endl;
-        cout << "End 1 is: " << end1 << endl;
-        cout << "Start 2 is: " << start2 << endl;
-        cout << "End 2 is: " << end2 - 1 << endl;
+        cout << "Start of Merge: " << endl;
+        cout << "The round is: " << seg << endl;
+        cout << "Starting index of segment 1 is: " << start1 << endl;
+        cout << "Ending index of segment 1 is: " << end1 << endl;
+        cout << "Starting index of segment 2 is: " << start2 << endl;
+        cout << "Ending index of segment 2 is: " << end2 - 1 << endl;
 
         inplace_merge(arr.begin() + start1, arr.begin() + start2, arr.begin() + end2);
-    }
 
-    cout << "The current merged array is: " << endl;
-    for(int i = 0; i < n; i++) {
-        if(i + 1 == arr.size())
-            cout << arr[i] << "\n\n";
-        else
-            cout << arr[i] << " ";
+        cout << "The current merged array is: " << endl;
+        for(int i = 0; i < n; i++) {
+            if(i + 1 == arr.size())
+                cout << arr[i] << "\n\n";
+            else
+                cout << arr[i] << " ";
+        }
     }
 
     pthread_mutex_unlock(&locker);
@@ -174,6 +175,9 @@ int main(int argc, char* argv[]) {
     int segments = p % 2 + p / 2;
 
     //Divide by 2 and add the modulo to get how many segments there will be after each merge round from the initial segments total
+    //3 3 3 3
+    //3 3 - 2 segments
+
     //i.e.
     //3 3 3 3 3
     //ROUND 1
@@ -202,12 +206,23 @@ int main(int argc, char* argv[]) {
         //i.e. 
         //3 3 3 -> We only need 1 thread because only 2 segments will be combined this round so 2 - 1 = 1 thread
         else {
-            for(int a = 0; a < i - 1; a++) {
-                pthread_create(&merge_threads[a], NULL, mergeArray, NULL);
-            }
+            if(i == 2){
+                for(int a = 0; a < i; a++) {
+                    pthread_create(&merge_threads[a], NULL, mergeArray, NULL);
+                }
 
-            for(int a = 0; a < i - 1; a++) {
-                pthread_join(merge_threads[a], NULL);
+                for(int a = 0; a < i; a++) {
+                    pthread_join(merge_threads[a], NULL);
+                }
+            }
+            else {
+                for(int a = 0; a < i - 1; a++) {
+                    pthread_create(&merge_threads[a], NULL, mergeArray, NULL);
+                }
+
+                for(int a = 0; a < i - 1; a++) {
+                    pthread_join(merge_threads[a], NULL);
+                }
             }
         }
 
@@ -221,7 +236,7 @@ int main(int argc, char* argv[]) {
         seg++;
     }
 
-    cout << "The merged array is: " << endl;
+    cout << "The final merged array is: " << endl;
     for(int i = 0; i < n; i++) {
         if(i + 1 == arr.size())
             cout << arr[i] << "\n\n";
